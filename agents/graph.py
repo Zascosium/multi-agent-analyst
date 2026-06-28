@@ -58,14 +58,13 @@ def _route(state: AnalysisState) -> str:
     return state.get("current_agent", "done")
 
 
-def build_graph() -> StateGraph:
+def build_graph(sandbox: SandboxRunner) -> StateGraph:
     builder = StateGraph(AnalysisState)
     builder.add_node("orchestrator", _orchestrator_node)
 
-    # Analyst and visualizer need access to the shared sandbox; we close over it
-    # at runtime via run_analysis(), not at graph-build time.
-    builder.add_node("analyst", lambda s: s)  # placeholder, replaced at runtime
-    builder.add_node("visualizer", lambda s: s)
+    # Analyst and visualizer need access to the shared sandbox.
+    builder.add_node("analyst", lambda s: analyst_node(s, sandbox))
+    builder.add_node("visualizer", lambda s: visualizer_node(s, sandbox))
     builder.add_node("writer", writer_node)
 
     builder.set_entry_point("orchestrator")
@@ -105,10 +104,7 @@ def run_analysis(
         init_code = f"import pandas as pd\ndf = pd.read_csv('{csv_path}')"
         sandbox.run(init_code)
 
-        # Wire sandbox-dependent nodes at runtime
-        graph = build_graph()
-        graph.add_node("analyst", lambda s: analyst_node(s, sandbox))
-        graph.add_node("visualizer", lambda s: visualizer_node(s, sandbox))
+        graph = build_graph(sandbox)
         app = graph.compile()
 
         final_state: AnalysisState = app.invoke(initial_state)  # type: ignore[assignment]

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
     log_level: str = "INFO"
     max_retries: int = 3
-    sandbox_timeout: int = 30
+    sandbox_timeout: int = 1800
     model: str = "claude-sonnet-4-6"
 
 
