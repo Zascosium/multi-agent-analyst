@@ -99,6 +99,7 @@ cp terraform.tfvars.example terraform.tfvars
 # Fill in your values
 
 terraform init
+terraform plan
 terraform apply
 
 # Push image to ECR (see GitHub Actions workflow for full CI/CD)

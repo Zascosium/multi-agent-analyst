@@ -30,6 +30,8 @@ infra/terraform/*.tfstate
 infra/terraform/*.tfstate.backup
 infra/terraform/*.tfvars
 !infra/terraform/*.tfvars.example
+*.lock.hcl
+
 
 # Frontend
 frontend/node_modules/
