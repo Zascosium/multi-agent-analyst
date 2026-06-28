@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import SecretStr
 
 from core.config import settings
 from core.prompts import VISUALIZER_SYSTEM
@@ -14,12 +16,12 @@ from core.schemas import AnalysisState, Chart
 
 logger = logging.getLogger(__name__)
 
-_llm = ChatAnthropic(model=settings.model, api_key=settings.anthropic_api_key)  # type: ignore[call-arg]
+_llm = ChatAnthropic(model=settings.model, api_key=SecretStr(settings.anthropic_api_key))  # type: ignore[call-arg]
 
 _MAX_CHARTS = 5
 
 
-def visualizer_node(state: AnalysisState, sandbox: SandboxRunner) -> dict:
+def visualizer_node(state: AnalysisState, sandbox: SandboxRunner) -> dict[str, Any]:
     """LangGraph node: determine charts → generate code → execute → collect images."""
     dataset_info = state["dataset_info"]
     assert dataset_info

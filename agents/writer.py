@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import SecretStr
 
 from core.config import settings
 from core.prompts import WRITER_SYSTEM
@@ -13,10 +15,10 @@ from core.schemas import AnalysisState
 
 logger = logging.getLogger(__name__)
 
-_llm = ChatAnthropic(model=settings.model, api_key=settings.anthropic_api_key)  # type: ignore[call-arg]
+_llm = ChatAnthropic(model=settings.model, api_key=SecretStr(settings.anthropic_api_key))  # type: ignore[call-arg]
 
 
-def writer_node(state: AnalysisState) -> dict:
+def writer_node(state: AnalysisState) -> dict[str, Any]:
     """LangGraph node: synthesize all findings into a structured report."""
     dataset_info = state["dataset_info"]
     assert dataset_info

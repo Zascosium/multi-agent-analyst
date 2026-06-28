@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import io
 import logging
+from typing import Any
 
 import pandas as pd
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, StateGraph
+from pydantic import SecretStr
 
 from agents.analyst import analyst_node
 from agents.visualizer import visualizer_node
@@ -20,7 +22,7 @@ from core.schemas import AnalysisState, DatasetInfo
 
 logger = logging.getLogger(__name__)
 
-_llm = ChatAnthropic(model=settings.model, api_key=settings.anthropic_api_key)  # type: ignore[call-arg]
+_llm = ChatAnthropic(model=settings.model, api_key=SecretStr(settings.anthropic_api_key))  # type: ignore[call-arg]
 
 
 def _parse_dataset(csv_bytes: bytes, filename: str) -> DatasetInfo:
@@ -35,7 +37,7 @@ def _parse_dataset(csv_bytes: bytes, filename: str) -> DatasetInfo:
     )
 
 
-def _orchestrator_node(state: AnalysisState) -> dict:
+def _orchestrator_node(state: AnalysisState) -> dict[str, Any]:
     dataset_info = state["dataset_info"]
     assert dataset_info
     prompt = (
@@ -58,7 +60,7 @@ def _route(state: AnalysisState) -> str:
     return state.get("current_agent", "done")
 
 
-def build_graph(sandbox: SandboxRunner) -> StateGraph:
+def build_graph(sandbox: SandboxRunner) -> StateGraph[AnalysisState]:
     builder = StateGraph(AnalysisState)
     builder.add_node("orchestrator", _orchestrator_node)
 

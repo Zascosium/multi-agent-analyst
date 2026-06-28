@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import SecretStr
 
 from core.config import settings
 from core.prompts import ANALYST_RETRY_SYSTEM, ANALYST_SYSTEM
@@ -14,10 +16,10 @@ from core.schemas import AnalysisState, CodeResult
 
 logger = logging.getLogger(__name__)
 
-_llm = ChatAnthropic(model=settings.model, api_key=settings.anthropic_api_key)  # type: ignore[call-arg]
+_llm = ChatAnthropic(model=settings.model, api_key=SecretStr(settings.anthropic_api_key))  # type: ignore[call-arg]
 
 
-def analyst_node(state: AnalysisState, sandbox: SandboxRunner) -> dict:
+def analyst_node(state: AnalysisState, sandbox: SandboxRunner) -> dict[str, Any]:
     """LangGraph node: plan → write code → execute → retry on failure."""
     dataset_info = state["dataset_info"]
     assert dataset_info

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from typing import Any
 
 from e2b_code_interpreter import Sandbox
 
@@ -77,7 +78,7 @@ class SandboxRunner:
                 attempt=attempt,
             )
 
-    def _run_code_with_retry(self, code: str):
+    def _run_code_with_retry(self, code: str) -> Any:
         assert self._sandbox, "SandboxRunner must be used as a context manager"
 
         for retry in range(_TRANSIENT_RETRIES + 1):

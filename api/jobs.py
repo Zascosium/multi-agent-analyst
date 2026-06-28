@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncGenerator
 from typing import Any
 
 _jobs: dict[str, dict[str, Any]] = {}
-_queues: dict[str, asyncio.Queue] = {}
+_queues: dict[str, asyncio.Queue[dict[str, Any]]] = {}
 
 
 def create_job(job_id: str) -> None:
@@ -30,7 +31,7 @@ async def push_event(job_id: str, event: dict[str, Any]) -> None:
         await _queues[job_id].put(event)
 
 
-async def stream_events(job_id: str):
+async def stream_events(job_id: str) -> AsyncGenerator[dict[str, Any], None]:
     """Async generator yielding events for SSE streaming."""
     queue = _queues.get(job_id)
     if not queue:
