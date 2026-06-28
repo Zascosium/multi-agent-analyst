@@ -1,0 +1,13 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - curl -sSL https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip -o tf.zip
+      - unzip tf.zip -d /usr/local/bin
+  build:
+    commands:
+      - cd infra/terraform
+      - terraform init -input=false
+      - terraform fmt -check
+      - terraform validate
+      - terraform plan -input=false
