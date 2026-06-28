@@ -5,7 +5,6 @@ from __future__ import annotations
 import io
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app

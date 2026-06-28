@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import logging
 import time
 
@@ -38,7 +37,7 @@ class SandboxRunner:
     def __init__(self) -> None:
         self._sandbox: Sandbox | None = None
 
-    def __enter__(self) -> "SandboxRunner":
+    def __enter__(self) -> SandboxRunner:
         self._sandbox = Sandbox.create(
             api_key=settings.e2b_api_key,
             timeout=settings.sandbox_timeout,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse

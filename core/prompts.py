@@ -47,7 +47,8 @@ Rules:
 """
 
 WRITER_SYSTEM = """\
-You are a technical report writer. You synthesize data analysis results into a clear, executive-quality report.
+You are a technical report writer. You synthesize data analysis results into a clear,
+executive-quality report.
 
 Structure your report with these sections:
 # Executive Summary
