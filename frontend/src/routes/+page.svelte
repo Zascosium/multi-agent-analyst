@@ -1,20 +1,15 @@
 <script lang="ts">
   import { fetchReport, streamJob, submitAnalysis, type Report, type StreamEvent } from '$lib/api';
+  import UploadForm from '$lib/components/UploadForm.svelte';
+  import AgentPipeline from '$lib/components/AgentPipeline.svelte';
+  import ReportView from '$lib/components/ReportView.svelte';
 
-  let file: File | null = null;
-  let question = 'Give me a comprehensive analysis of this dataset.';
-  let status: 'idle' | 'uploading' | 'running' | 'complete' | 'error' = 'idle';
-  let events: StreamEvent[] = [];
-  let report: Report | null = null;
-  let errorMsg = '';
+  let status = $state<'idle' | 'uploading' | 'running' | 'complete' | 'error'>('idle');
+  let events = $state<StreamEvent[]>([]);
+  let report = $state<Report | null>(null);
+  let errorMsg = $state('');
 
-  function handleFile(e: Event) {
-    const input = e.target as HTMLInputElement;
-    file = input.files?.[0] ?? null;
-  }
-
-  async function handleSubmit() {
-    if (!file) return;
+  async function handleSubmit(file: File, question: string) {
     status = 'uploading';
     events = [];
     report = null;
@@ -48,133 +43,95 @@
     }
   }
 
-  function agentLabel(agent?: string) {
-    const labels: Record<string, string> = {
-      orchestrator: 'Orchestrator planning analysis...',
-      analyst: 'Analyst writing & executing code...',
-      visualizer: 'Visualizer generating charts...',
-      writer: 'Writer synthesizing report...',
-    };
-    return agent ? (labels[agent] ?? agent) : '';
+  function reset() {
+    status = 'idle';
+    events = [];
+    report = null;
+    errorMsg = '';
   }
 </script>
 
-<main>
-  <header>
-    <h1>Multi-Agent Data Analyst</h1>
-    <p>Upload a CSV. A crew of LLM agents will analyze it and produce a report.</p>
+<div class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+  <!-- Header -->
+  <header class="flex items-start gap-4">
+    <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5">
+      <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    </div>
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Multi-Agent Data Analyst</h1>
+      <p class="text-slate-500 text-sm mt-0.5">
+        Upload a CSV — a crew of LLM agents will analyze it and produce a full report with charts.
+      </p>
+    </div>
   </header>
 
+  <!-- Upload form -->
   {#if status === 'idle' || status === 'uploading'}
-    <section class="upload-form">
-      <label>
-        CSV file
-        <input type="file" accept=".csv" on:change={handleFile} />
-      </label>
-      <label>
-        Question / goal
-        <textarea rows="3" bind:value={question}></textarea>
-      </label>
-      <button disabled={!file || status === 'uploading'} on:click={handleSubmit}>
-        {status === 'uploading' ? 'Uploading…' : 'Analyze'}
+    <section class="bg-white rounded-2xl border border-surface-200 shadow-sm p-6 sm:p-8">
+      <h2 class="text-base font-semibold text-slate-700 mb-6">Upload your data</h2>
+      <UploadForm {status} onsubmit={handleSubmit} />
+    </section>
+  {/if}
+
+  <!-- Agent pipeline -->
+  {#if status === 'running'}
+    <section class="bg-white rounded-2xl border border-surface-200 shadow-sm p-6 sm:p-8">
+      <h2 class="text-base font-semibold text-slate-700 mb-6">Agents at work</h2>
+      <AgentPipeline {events} />
+    </section>
+  {/if}
+
+  <!-- Error -->
+  {#if status === 'error'}
+    <section class="bg-red-50 border border-red-200 rounded-2xl p-6 space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div class="space-y-1 min-w-0">
+          <h2 class="font-semibold text-red-800">Analysis failed</h2>
+          <p class="text-sm text-red-700 font-mono break-all">{errorMsg}</p>
+        </div>
+      </div>
+      <button
+        onclick={reset}
+        class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-50 transition"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Try again
       </button>
     </section>
   {/if}
 
-  {#if status === 'running'}
-    <section class="activity">
-      <h2>Agents at work</h2>
-      <ul>
-        {#each events as ev}
-          {#if ev.event === 'agent_start'}
-            <li class="agent-step">{agentLabel(ev.agent)}</li>
-          {/if}
-        {/each}
-      </ul>
-      <div class="spinner" aria-label="Working…"></div>
-    </section>
-  {/if}
-
-  {#if status === 'error'}
-    <section class="error">
-      <h2>Error</h2>
-      <pre>{errorMsg}</pre>
-      <button on:click={() => (status = 'idle')}>Try again</button>
-    </section>
-  {/if}
-
+  <!-- Results -->
   {#if status === 'complete' && report}
-    <section class="report">
-      <h2>Analysis Report</h2>
-      {#if report.charts.length}
-        <div class="charts">
-          {#each report.charts as chart}
-            <figure>
-              <img src="data:image/png;base64,{chart.image_b64}" alt={chart.title} />
-              <figcaption>{chart.title} — {chart.description}</figcaption>
-            </figure>
-          {/each}
-        </div>
-      {/if}
-      <div class="report-body">
-        <pre>{report.report}</pre>
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-slate-900">Analysis Report</h2>
+        <button
+          onclick={reset}
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 border border-surface-200 hover:bg-surface-100 transition"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Analyze another file
+        </button>
       </div>
-      <button on:click={() => (status = 'idle')}>Analyze another file</button>
+
+      <div class="bg-white rounded-2xl border border-surface-200 shadow-sm p-6 sm:p-8">
+        <ReportView {report} />
+      </div>
     </section>
   {/if}
-</main>
-
-<style>
-  main {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-    font-family: system-ui, sans-serif;
-  }
-  header { margin-bottom: 2rem; }
-  h1 { font-size: 1.8rem; margin: 0 0 0.4rem; }
-  header p { color: #555; }
-
-  .upload-form { display: flex; flex-direction: column; gap: 1rem; max-width: 540px; }
-  label { display: flex; flex-direction: column; gap: 0.25rem; font-weight: 600; }
-  input[type="file"], textarea { font-size: 1rem; padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
-  button {
-    padding: 0.6rem 1.4rem;
-    background: #1a73e8;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    font-size: 1rem;
-    cursor: pointer;
-    width: fit-content;
-  }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .activity { margin-top: 2rem; }
-  .agent-step { margin: 0.4rem 0; color: #333; }
-  .spinner {
-    width: 2rem; height: 2rem;
-    border: 3px solid #ddd;
-    border-top-color: #1a73e8;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-top: 1rem;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .error pre { background: #fee; padding: 1rem; border-radius: 4px; color: #c00; }
-
-  .charts { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.5rem 0; }
-  figure { margin: 0; }
-  figure img { max-width: 400px; border: 1px solid #eee; border-radius: 6px; }
-  figcaption { font-size: 0.8rem; color: #666; margin-top: 0.25rem; }
-
-  .report-body pre {
-    white-space: pre-wrap;
-    background: #f8f8f8;
-    padding: 1.5rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    line-height: 1.6;
-  }
-</style>
+</div>
