@@ -38,11 +38,6 @@ variable "desired_count" {
   default     = 1
 }
 
-variable "github_connection_arn" {
-  description = "ARN of the AWS CodeStar connection to GitHub (create in CodePipeline console first)"
-  type        = string
-}
-
 variable "github_repo" {
   description = "Full GitHub repository name, e.g. Zascosium/multi-agent-analyst"
   type        = string
