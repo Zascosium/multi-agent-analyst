@@ -23,6 +23,7 @@
     try {
       const { stream_url, report_url } = await submitAnalysis(file, question);
       status = 'running';
+      let streamFailed = false;
 
       await new Promise<void>((resolve) => {
         streamJob(stream_url, (event) => {
@@ -31,12 +32,13 @@
           if (event.event === 'error') {
             errorMsg = String(event.data ?? 'Unknown error');
             status = 'error';
+            streamFailed = true;
             resolve();
           }
         });
       });
 
-      if (status !== 'error') {
+      if (!streamFailed) {
         report = await fetchReport(report_url);
         status = 'complete';
       }
